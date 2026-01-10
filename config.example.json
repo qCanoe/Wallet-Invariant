@@ -1,0 +1,19 @@
+{
+  "simulator": {
+    "rpc_url": "https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY",
+    "method": "eth_call",
+    "timeout": 30,
+    "enable_trace": false,
+    "max_retries": 3
+  },
+  "invariants": {
+    "unlimited_allowance_threshold": "1606938044258990275541962092341162602522202993782792835301376",
+    "allowance_balance_multiplier": 5,
+    "max_expected_token_count": 2,
+    "high_call_depth_threshold": 10,
+    "high_delegate_call_threshold": 5,
+    "enable_path_rejection": false
+  },
+  "debug": false,
+  "log_level": "INFO"
+}

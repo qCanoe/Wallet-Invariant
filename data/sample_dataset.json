@@ -1,0 +1,36 @@
+{
+  "description": "Wallet Invariant 评估数据集示例",
+  "note": "请替换为真实的测试网交易哈希",
+  "samples": [
+    {
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "label": "attack",
+      "description": "示例：Approval abuse 攻击（替换为真实 txHash）",
+      "expected_decision": "reject"
+    },
+    {
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+      "label": "attack",
+      "description": "示例：Phishing drain 攻击（替换为真实 txHash）",
+      "expected_decision": "reject"
+    },
+    {
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000003",
+      "label": "benign",
+      "description": "示例：正常 ERC20 transfer（替换为真实 txHash）",
+      "expected_decision": "allow"
+    },
+    {
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000004",
+      "label": "benign",
+      "description": "示例：正常 Uniswap swap（替换为真实 txHash）",
+      "expected_decision": "allow"
+    },
+    {
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000005",
+      "label": "benign",
+      "description": "示例：正常 approve（替换为真实 txHash）",
+      "expected_decision": "allow"
+    }
+  ]
+}
