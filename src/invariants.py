@@ -31,8 +31,22 @@ from .types import (
 )
 from .config import InvariantConfig, DEFAULT_CONFIG
 from .classifier import is_likely_swap
+from .constants import COMPOSITE_OP_SELECTORS
 
 logger = logging.getLogger(__name__)
+
+
+def _estimate_user_balance(delta: DeltaS, token_address: str) -> int:
+    """从 asset_changes 推断用户持有该 token 的余额（保守估计）。
+
+    只使用日志中已有的信息，不发起 RPC 查询，保持 fail-open 特性。
+    无法推断时返回 0（跳过相对阈值检测）。
+    """
+    token_addr = token_address.lower()
+    for change in delta.asset_changes:
+        if change.token_address.lower() == token_addr:
+            return max(change.balance_before, change.balance_after)
+    return 0
 
 
 class Invariant(ABC):
@@ -180,9 +194,9 @@ class I2NoUnlimitedPermission(Invariant):
                     "reason": "unlimited_allowance" if perm.permission_type == "allowance" else "approval_for_all",
                     "value": str(perm.value_after),
                 })
-            
-            # 检查 2: 超大授权（超过阈值）
-            elif (perm.permission_type == "allowance" and 
+
+            # 检查 2: 超大授权（超过绝对阈值）
+            elif (perm.permission_type == "allowance" and
                   perm.is_new_permission and
                   perm.value_after >= config.unlimited_allowance_threshold):
                 suspicious.append({
@@ -192,6 +206,24 @@ class I2NoUnlimitedPermission(Invariant):
                     "reason": "near_unlimited_allowance",
                     "value": str(perm.value_after),
                 })
+
+            # 检查 3: 相对余额倍数（授权量 > 用户余额 × multiplier）
+            elif (perm.permission_type == "allowance" and
+                  perm.is_new_permission and
+                  config.allowance_balance_multiplier > 0):
+                token_balance = _estimate_user_balance(delta, perm.token_address)
+                if token_balance > 0:
+                    multiplier = perm.value_after / token_balance
+                    if multiplier >= config.allowance_balance_multiplier:
+                        suspicious.append({
+                            "token": perm.token_address,
+                            "type": perm.permission_type,
+                            "spender": perm.spender,
+                            "reason": "disproportionate_allowance",
+                            "value": str(perm.value_after),
+                            "estimated_balance": str(token_balance),
+                            "multiplier": f"{multiplier:.1f}x",
+                        })
         
         if not suspicious:
             return True, None, None
@@ -260,14 +292,22 @@ class I3ScopeLocality(Invariant):
             return True, None, None
         
         # 非 swap 的资产操作
-        # 检查涉及的 token 数量
-        if delta.scope.affected_token_count > config.max_expected_token_count:
-            # 检查是否有意外的 token 流出
+        # 对复合调用（multicall/execute 等），scope 检测宽松一倍
+        selector = tx.selector()
+        if selector and selector.lower() in COMPOSITE_OP_SELECTORS:
+            effective_limit = config.max_expected_token_count * 2
+        else:
+            effective_limit = config.max_expected_token_count
+
+        if delta.scope.affected_token_count > effective_limit:
+            # 过滤 dust 转账：只统计金额 >= dust_threshold_wei 的意外流出
             outflow_unexpected = [
-                c for c in delta.asset_changes 
-                if c.is_outflow and c.token_address in delta.scope.unexpected_tokens
+                c for c in delta.asset_changes
+                if (c.is_outflow
+                    and c.token_address in delta.scope.unexpected_tokens
+                    and abs(c.delta) >= config.dust_threshold_wei)
             ]
-            
+
             if outflow_unexpected:
                 violation = InvariantViolation(
                     invariant_id=self.invariant_id,
@@ -276,12 +316,13 @@ class I3ScopeLocality(Invariant):
                     evidence={
                         "target_contract": tx.to_address,
                         "affected_token_count": delta.scope.affected_token_count,
+                        "effective_limit": effective_limit,
                         "unexpected_tokens": delta.scope.unexpected_tokens,
                         "unexpected_outflows": [c.to_dict() for c in outflow_unexpected],
                     }
                 )
                 return False, violation, None
-        
+
         return True, None, None
 
 
@@ -322,7 +363,7 @@ class I4PathComplexity(Invariant):
         
         if not is_complex:
             return True, None, None
-        
+
         # 构建风险标签
         details = {
             "max_call_depth": ps.max_call_depth,
@@ -330,16 +371,29 @@ class I4PathComplexity(Invariant):
             "internal_call_count": ps.internal_call_count,
             "unique_contracts_called": ps.unique_contracts_called,
         }
-        
+
         severity = "high" if ps.delegate_call_count >= config.high_delegate_call_threshold else "medium"
-        
+
         label = RiskLabel(
             label="high_path_complexity",
             severity=severity,
             details=details,
         )
-        
-        # 如果启用路径拒绝
+
+        # 极端阈值检测：无论 enable_path_rejection 配置，直接拒绝
+        is_critical = (
+            ps.delegate_call_count >= config.critical_delegate_call_threshold
+            or ps.max_call_depth >= config.critical_call_depth_threshold
+        )
+        if is_critical:
+            violation = InvariantViolation(
+                invariant_id=self.invariant_id,
+                message=f"执行路径极端复杂（深度={ps.max_call_depth}, delegatecall={ps.delegate_call_count}），强制拒绝",
+                evidence=details,
+            )
+            return False, violation, label
+
+        # 普通高复杂度：受 enable_path_rejection 控制
         if config.enable_path_rejection:
             violation = InvariantViolation(
                 invariant_id=self.invariant_id,
@@ -347,7 +401,7 @@ class I4PathComplexity(Invariant):
                 evidence=details,
             )
             return False, violation, label
-        
+
         # 默认只做标签
         return True, None, label
 
@@ -388,6 +442,23 @@ class InvariantEngine:
         
         # 检查 fail-open 条件
         if sim_meta and sim_meta.fail_open:
+            # 超时场景：可配置为拒绝（防止攻击者利用超时绕过检测）
+            if (sim_meta.fail_open_reason == FailOpenReason.TIMEOUT
+                    and not self.config.fail_open_on_timeout):
+                return GateDecision(
+                    decision=Decision.REJECT,
+                    is_fail_open=True,
+                    fail_open_reason=sim_meta.fail_open_reason,
+                    fail_open_details=sim_meta.fail_open_details,
+                    violations=[InvariantViolation(
+                        invariant_id=InvariantId.I1_NON_ASSET_NO_LOSS,
+                        message="模拟超时，fail_open_on_timeout=False，保守拒绝",
+                        evidence={"reason": "timeout"},
+                    )],
+                    tx_input=tx,
+                    delta_summary=delta.to_dict(),
+                    sim_meta=sim_meta,
+                )
             return GateDecision(
                 decision=Decision.ALLOW,
                 is_fail_open=True,

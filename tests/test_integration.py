@@ -38,6 +38,8 @@ from src.constants import (
     SELECTOR_APPROVE,
     SELECTOR_SWAP_EXACT_TOKENS,
     SELECTOR_PERMIT2_PERMIT_BATCH,
+    SELECTOR_1INCH_SWAP,
+    SELECTOR_INCREASE_ALLOWANCE,
 )
 from tests.fixtures.rpc_responses import (
     USER, ATTACKER, SPENDER, NFT_CONTRACT, DEX_ROUTER,
@@ -234,6 +236,40 @@ async def test_permit2_permit_batch_classified_as_permission_op(
 
     # SELECTOR_PERMIT2_PERMIT_BATCH was added to PERMISSION_OP_SELECTORS in Task 1
     tx = _tx(SELECTOR_PERMIT2_PERMIT_BATCH)
+    result = await _gate(gate_config).evaluate_tx_input(tx)
+
+    assert result.decision == Decision.ALLOW
+    assert not any(v.invariant_id == InvariantId.I2_NO_UNLIMITED_PERM for v in result.violations)
+
+
+async def test_1inch_swap_with_two_tokens_is_allowed(
+    httpx_mock: HTTPXMock, gate_config: GateConfig
+):
+    """1inch swap selector triggers is_likely_swap → I3 skips multi-token check."""
+    logs = [
+        transfer_log(TOKEN_A, USER, DEX_ROUTER, ONE_ETHER, log_index=0),
+        transfer_log(TOKEN_B, DEX_ROUTER, USER, ONE_ETHER * 2, log_index=1),
+    ]
+    httpx_mock.add_response(json=eth_call_ok())
+    httpx_mock.add_response(json=receipt_ok(FAKE_TX_HASH, logs))
+
+    tx = _tx(SELECTOR_1INCH_SWAP, to=DEX_ROUTER)
+    result = await _gate(gate_config).evaluate_tx_input(tx)
+
+    assert result.decision == Decision.ALLOW
+    assert not any(v.invariant_id == InvariantId.I3_SCOPE_LOCALITY for v in result.violations)
+
+
+async def test_increase_allowance_classified_as_permission_op(
+    httpx_mock: HTTPXMock, gate_config: GateConfig
+):
+    """increaseAllowance is PERMISSION_OP → unlimited approval event does NOT trigger I2."""
+    logs = [approval_log(TOKEN_A, USER, SPENDER, UNLIMITED)]
+    httpx_mock.add_response(json=eth_call_ok())
+    httpx_mock.add_response(json=receipt_ok(FAKE_TX_HASH, logs))
+
+    # increaseAllowance was added to PERMISSION_OP_SELECTORS in the strengthening step
+    tx = _tx(SELECTOR_INCREASE_ALLOWANCE)
     result = await _gate(gate_config).evaluate_tx_input(tx)
 
     assert result.decision == Decision.ALLOW

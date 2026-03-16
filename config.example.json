@@ -12,7 +12,11 @@
     "max_expected_token_count": 2,
     "high_call_depth_threshold": 10,
     "high_delegate_call_threshold": 5,
-    "enable_path_rejection": false
+    "enable_path_rejection": false,
+    "critical_call_depth_threshold": 15,
+    "critical_delegate_call_threshold": 10,
+    "dust_threshold_wei": 1000,
+    "fail_open_on_timeout": true
   },
   "debug": false,
   "log_level": "INFO"

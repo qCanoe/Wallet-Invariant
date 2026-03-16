@@ -40,12 +40,22 @@ class InvariantConfig:
     # I3: 作用域阈值
     max_expected_token_count: int = 2
     
-    # I4: 路径复杂度阈值
+    # I4: 路径复杂度阈值（触发 RiskLabel）
     high_call_depth_threshold: int = 10
     high_delegate_call_threshold: int = 5
-    
+
+    # I4: 极端阈值（无论 enable_path_rejection，直接 REJECT）
+    critical_call_depth_threshold: int = 15
+    critical_delegate_call_threshold: int = 10
+
     # I4: 是否启用路径合理性拒绝（默认只做标签化）
     enable_path_rejection: bool = False
+
+    # I3: dust 转账过滤阈值（绝对值 < 此 wei 的转账不计入 scope）
+    dust_threshold_wei: int = 1000
+
+    # fail-open: 超时时是否允许交易（默认 True；设为 False 则超时 → REJECT）
+    fail_open_on_timeout: bool = True
 
 
 @dataclass
@@ -123,6 +133,22 @@ class GateConfig:
             config.invariants.enable_path_rejection = inv_data.get(
                 "enable_path_rejection",
                 config.invariants.enable_path_rejection
+            )
+            config.invariants.critical_call_depth_threshold = inv_data.get(
+                "critical_call_depth_threshold",
+                config.invariants.critical_call_depth_threshold,
+            )
+            config.invariants.critical_delegate_call_threshold = inv_data.get(
+                "critical_delegate_call_threshold",
+                config.invariants.critical_delegate_call_threshold,
+            )
+            config.invariants.dust_threshold_wei = inv_data.get(
+                "dust_threshold_wei",
+                config.invariants.dust_threshold_wei,
+            )
+            config.invariants.fail_open_on_timeout = inv_data.get(
+                "fail_open_on_timeout",
+                config.invariants.fail_open_on_timeout,
             )
         
         config.debug = data.get("debug", config.debug)

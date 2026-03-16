@@ -33,13 +33,24 @@ SELECTOR_PERMIT2_PERMIT_BATCH = "0x4bdb7453"   # permitBatch(address,(address,ui
 SELECTOR_PERMIT2_PERMIT_SINGLE = "0x44d46566"  # permitSingle(address,(address,uint160,uint48,uint48),uint256,bytes)
 SELECTOR_PERMIT2_PERMIT_AND_TRANSFER = "0x0d58b1db"  # permitAndTransferFrom(address,(address,uint160,uint48,uint48),address,uint256,uint256,bytes)
 
-# DEX / Swap 相关
+# ERC20 授权量增减（属于 PERMISSION_OP，而非 NON_ASSET_OP）
+SELECTOR_INCREASE_ALLOWANCE = "0x39509351"  # increaseAllowance(address,uint256)
+SELECTOR_DECREASE_ALLOWANCE = "0xa457c2d7"  # decreaseAllowance(address,uint256)
+
+# DEX / Swap 相关（Uniswap V2）
 SELECTOR_SWAP_EXACT_TOKENS = "0x38ed1739"  # swapExactTokensForTokens
 SELECTOR_SWAP_TOKENS_EXACT = "0x8803dbee"  # swapTokensForExactTokens
 SELECTOR_SWAP_EXACT_ETH = "0x7ff36ab5"     # swapExactETHForTokens
 SELECTOR_SWAP_ETH_EXACT = "0xfb3bdb41"     # swapETHForExactTokens
 SELECTOR_MULTICALL = "0xac9650d8"          # multicall(bytes[])
 SELECTOR_EXECUTE = "0x3593564c"            # execute(bytes,bytes[],uint256) - Universal Router
+
+# DEX / Swap 相关（其他主流协议）
+SELECTOR_1INCH_SWAP = "0x12aa3caf"         # 1inch swap(address,SwapDescription,bytes,bytes)
+SELECTOR_CURVE_EXCHANGE = "0x3df02124"     # Curve exchange(int128,int128,uint256,uint256)
+SELECTOR_BALANCER_SWAP = "0x52bbbe29"      # Balancer swap(SingleSwap,FundManagement,uint256,uint256)
+SELECTOR_PARASWAP_SIMPLE = "0x54e3f31b"   # Paraswap simpleSwap(...)
+SELECTOR_ZERO_EX_TRANSFORM = "0x415565b0" # 0x transformERC20(...)
 
 
 # ============================================================
@@ -79,6 +90,11 @@ ASSET_OP_SELECTORS = {
     SELECTOR_SWAP_EXACT_ETH,
     SELECTOR_SWAP_ETH_EXACT,
     SELECTOR_PERMIT2_TRANSFER_FROM,
+    SELECTOR_1INCH_SWAP,
+    SELECTOR_CURVE_EXCHANGE,
+    SELECTOR_BALANCER_SWAP,
+    SELECTOR_PARASWAP_SIMPLE,
+    SELECTOR_ZERO_EX_TRANSFORM,
 }
 
 # 明确的授权操作
@@ -90,6 +106,8 @@ PERMISSION_OP_SELECTORS = {
     SELECTOR_PERMIT2_PERMIT_BATCH,
     SELECTOR_PERMIT2_PERMIT_SINGLE,
     SELECTOR_PERMIT2_PERMIT_AND_TRANSFER,
+    SELECTOR_INCREASE_ALLOWANCE,
+    SELECTOR_DECREASE_ALLOWANCE,
 }
 
 # 可能包含多种操作的复合调用（需要更谨慎处理）
