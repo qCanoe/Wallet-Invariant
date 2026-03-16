@@ -2,7 +2,6 @@
 测试交易分类器
 """
 
-import pytest
 from src.types import TxInput, TxCategory
 from src.classifier import classify_transaction, is_likely_swap
 from src.constants import SELECTOR_TRANSFER, SELECTOR_APPROVE, SELECTOR_SWAP_EXACT_TOKENS

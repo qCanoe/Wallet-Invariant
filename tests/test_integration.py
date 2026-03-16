@@ -27,7 +27,6 @@ behaviour:
 """
 
 import httpx
-import pytest
 from pytest_httpx import HTTPXMock
 
 from src.gate import ExecutionGate
@@ -45,8 +44,7 @@ from tests.fixtures.rpc_responses import (
     USER, ATTACKER, SPENDER, NFT_CONTRACT, DEX_ROUTER,
     TOKEN_A, TOKEN_B, TOKEN_C,
     ONE_ETHER,
-    eth_call_ok, receipt_ok, receipt_empty,
-    transfer_log, approval_log, approval_for_all_log,
+    eth_call_ok, receipt_ok, transfer_log, approval_log, approval_for_all_log,
 )
 
 UNLIMITED = 2**256 - 1

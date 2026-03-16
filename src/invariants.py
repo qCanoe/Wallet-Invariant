@@ -27,7 +27,6 @@ from .types import (
     InvariantViolation,
     RiskLabel,
     FailOpenReason,
-    is_unlimited_allowance,
 )
 from .config import InvariantConfig, DEFAULT_CONFIG
 from .classifier import is_likely_swap

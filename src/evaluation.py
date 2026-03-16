@@ -13,11 +13,10 @@ import logging
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 from collections import defaultdict
 
-from .types import Decision, InvariantId, GateDecision
+from .types import Decision, GateDecision
 from .config import GateConfig
 from .gate import ExecutionGate
 

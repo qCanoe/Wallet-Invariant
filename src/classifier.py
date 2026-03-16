@@ -7,7 +7,6 @@ Wallet Invariant MVP - 交易粗分类器
 - NonAssetOp: 其余（login/claim/mint 等）
 """
 
-from typing import Optional
 from .types import TxInput, TxCategory
 from .constants import (
     ASSET_OP_SELECTORS,

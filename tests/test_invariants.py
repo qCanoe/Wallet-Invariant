@@ -310,7 +310,6 @@ class TestClassifier:
             to_address="0xtoken",
             data=SELECTOR_INCREASE_ALLOWANCE + "0" * 128,
         )
-        from src.classifier import classify_transaction
         assert classify_transaction(tx) == TxCategory.PERMISSION_OP
 
     def test_1inch_swap_is_likely_swap(self):

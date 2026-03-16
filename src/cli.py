@@ -18,7 +18,7 @@ import click
 
 from .config import GateConfig
 from .gate import ExecutionGate
-from .evaluation import Evaluator, TxSample, load_dataset
+from .evaluation import Evaluator, load_dataset
 
 # 配置日志
 logging.basicConfig(
