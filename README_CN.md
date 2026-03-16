@@ -38,6 +38,84 @@ cd wallet-invariant
 pip install -e ".[dev]"
 ```
 
+## 快速上手（3 分钟）
+
+### 1. 配置 RPC
+
+```bash
+export RPC_URL="https://eth-mainnet.g.alchemy.com/v2/YOUR_API_KEY"
+```
+
+### 2. CLI：评估单笔链上交易
+
+```bash
+gate eval --tx-hash 0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060
+```
+
+示例输出（Approval 滥用攻击被拒绝）：
+
+```json
+{
+  "decision": "reject",
+  "violations": [
+    {
+      "invariant_id": "I2",
+      "message": "非授权操作引入 1 项永久/无限权限",
+      "evidence": {
+        "category": "non_asset_op",
+        "suspicious_permissions": [
+          {
+            "token": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+            "type": "allowance",
+            "spender": "0xattacker...",
+            "reason": "unlimited_allowance"
+          }
+        ]
+      }
+    }
+  ],
+  "is_fail_open": false
+}
+```
+
+### 3. Python API：在用户签名前拦截
+
+```python
+from src.gate import ExecutionGate
+from src.types import TxInput, Decision
+
+gate = ExecutionGate.from_env()          # 读取 RPC_URL 环境变量
+
+tx = TxInput(
+    chain_id=1,
+    from_address="0xYourWallet",
+    to_address="0xSomeContract",
+    data="0xabcdef...",                  # calldata
+    value=0,
+)
+
+decision = gate.evaluate_tx_input_sync(tx)
+
+if decision.decision == Decision.REJECT:
+    print("交易被拦截！")
+    for v in decision.violations:
+        print(f"  违规不变量 {v.invariant_id.value}: {v.message}")
+else:
+    print("交易通过，可以签名")
+```
+
+### 4. 批量评估数据集
+
+```bash
+# 生成示例数据集模板
+gate init-dataset --output my_dataset.json
+
+# 填入真实交易哈希后运行批量评估
+gate batch --input my_dataset.json --output report.json --concurrency 5
+```
+
+---
+
 ## 配置
 
 1. 复制示例配置：
@@ -118,14 +196,21 @@ wallet-invariant/
 │   ├── evaluation.py         # 回放评估管线
 │   └── cli.py                # CLI 工具
 ├── tests/
+│   ├── conftest.py               # 共享 fixtures
+│   ├── fixtures/
+│   │   └── rpc_responses.py      # Mock RPC 响应工厂
 │   ├── test_types.py
 │   ├── test_classifier.py
-│   └── test_invariants.py
+│   ├── test_invariants.py
+│   └── test_integration.py       # 端到端集成测试（离线）
 ├── data/
 │   └── sample_dataset.json   # 示例数据集
 ├── config.example.json       # 配置示例
 ├── requirements.txt          # 依赖列表
 ├── pyproject.toml            # 项目配置
+├── .github/
+│   └── workflows/ci.yml          # GitHub Actions CI
+├── ROADMAP.md                    # 项目路线规划
 └── README.md
 ```
 

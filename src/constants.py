@@ -29,6 +29,9 @@ SELECTOR_BALANCE_OF_1155 = "0x00fdd58e"          # balanceOf(address,uint256)
 SELECTOR_PERMIT = "0xd505accf"             # permit(address,address,uint256,uint256,uint8,bytes32,bytes32)
 SELECTOR_PERMIT2_PERMIT = "0x2a2d80d1"     # permit(...)
 SELECTOR_PERMIT2_TRANSFER_FROM = "0x36c78516"  # transferFrom(...)
+SELECTOR_PERMIT2_PERMIT_BATCH = "0x4bdb7453"   # permitBatch(address,(address,uint160,uint48,uint48)[],uint256,bytes)
+SELECTOR_PERMIT2_PERMIT_SINGLE = "0x44d46566"  # permitSingle(address,(address,uint160,uint48,uint48),uint256,bytes)
+SELECTOR_PERMIT2_PERMIT_AND_TRANSFER = "0x0d58b1db"  # permitAndTransferFrom(address,(address,uint160,uint48,uint48),address,uint256,uint256,bytes)
 
 # DEX / Swap 相关
 SELECTOR_SWAP_EXACT_TOKENS = "0x38ed1739"  # swapExactTokensForTokens
@@ -84,6 +87,9 @@ PERMISSION_OP_SELECTORS = {
     SELECTOR_SET_APPROVAL_FOR_ALL,
     SELECTOR_PERMIT,
     SELECTOR_PERMIT2_PERMIT,
+    SELECTOR_PERMIT2_PERMIT_BATCH,
+    SELECTOR_PERMIT2_PERMIT_SINGLE,
+    SELECTOR_PERMIT2_PERMIT_AND_TRANSFER,
 }
 
 # 可能包含多种操作的复合调用（需要更谨慎处理）
