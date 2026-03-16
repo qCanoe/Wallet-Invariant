@@ -3,7 +3,7 @@ Wallet Invariant MVP - 配置管理
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 import os
 import json
 

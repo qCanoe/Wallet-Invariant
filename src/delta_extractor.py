@@ -97,8 +97,6 @@ class DeltaExtractor:
         
         for log in logs:
             event_sig, indexed = _parse_log_topics(log)
-            contract_addr = log.get("address", "").lower()
-            data = log.get("data", "0x")
             
             # ERC20/ERC721 Transfer 事件
             if event_sig == TOPIC_ERC20_TRANSFER.lower():
@@ -113,17 +111,17 @@ class DeltaExtractor:
             
             # ERC20 Approval 事件
             elif event_sig == TOPIC_ERC20_APPROVAL.lower():
-                change = self._parse_approval_event(log, user_addr)
-                if change:
-                    permission_changes.append(change)
-                    affected_tokens.add(change.token_address)
+                permission_change = self._parse_approval_event(log, user_addr)
+                if permission_change:
+                    permission_changes.append(permission_change)
+                    affected_tokens.add(permission_change.token_address)
             
             # ERC721/ERC1155 ApprovalForAll 事件
             elif event_sig == TOPIC_APPROVAL_FOR_ALL.lower():
-                change = self._parse_approval_for_all_event(log, user_addr)
-                if change:
-                    permission_changes.append(change)
-                    affected_tokens.add(change.token_address)
+                permission_change = self._parse_approval_for_all_event(log, user_addr)
+                if permission_change:
+                    permission_changes.append(permission_change)
+                    affected_tokens.add(permission_change.token_address)
             
             # ERC1155 TransferSingle 事件
             elif event_sig == TOPIC_ERC1155_TRANSFER_SINGLE.lower():
@@ -176,7 +174,7 @@ class DeltaExtractor:
         user_addr: str
     ) -> Optional[AssetChange]:
         """解析 Transfer 事件"""
-        event_sig, indexed = _parse_log_topics(log)
+        _, indexed = _parse_log_topics(log)
         contract_addr = log.get("address", "").lower()
         data = log.get("data", "0x")
         
@@ -231,7 +229,7 @@ class DeltaExtractor:
         user_addr: str
     ) -> Optional[PermissionChange]:
         """解析 Approval 事件（ERC20）"""
-        event_sig, indexed = _parse_log_topics(log)
+        _, indexed = _parse_log_topics(log)
         contract_addr = log.get("address", "").lower()
         data = log.get("data", "0x")
         
@@ -263,7 +261,7 @@ class DeltaExtractor:
         user_addr: str
     ) -> Optional[PermissionChange]:
         """解析 ApprovalForAll 事件"""
-        event_sig, indexed = _parse_log_topics(log)
+        _, indexed = _parse_log_topics(log)
         contract_addr = log.get("address", "").lower()
         data = log.get("data", "0x")
         
@@ -298,7 +296,7 @@ class DeltaExtractor:
         user_addr: str
     ) -> Optional[AssetChange]:
         """解析 ERC1155 TransferSingle 事件"""
-        event_sig, indexed = _parse_log_topics(log)
+        _, indexed = _parse_log_topics(log)
         contract_addr = log.get("address", "").lower()
         data = log.get("data", "0x")
         
@@ -343,11 +341,11 @@ class DeltaExtractor:
         user_addr: str
     ) -> List[AssetChange]:
         """解析 ERC1155 TransferBatch 事件"""
-        event_sig, indexed = _parse_log_topics(log)
+        _, indexed = _parse_log_topics(log)
         contract_addr = log.get("address", "").lower()
         data = log.get("data", "0x")
         
-        changes = []
+        changes: List[AssetChange] = []
         
         if len(indexed) < 3:
             return changes
@@ -487,7 +485,7 @@ async def extract_delta_for_tx(
     Returns:
         (TxInput, SimMeta, DeltaS)
     """
-    from .simulator import Simulator, SimulatorConfig
+    from .simulator import Simulator
     
     config = SimulatorConfig(rpc_url=rpc_url, enable_trace=enable_trace)
     simulator = Simulator(config)

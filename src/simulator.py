@@ -14,9 +14,8 @@ Wallet Invariant MVP - 预执行模拟器
 import asyncio
 import logging
 from typing import Optional, Dict, Any, List, Tuple
-from dataclasses import dataclass
 
-from .types import TxInput, SimMeta, FailOpenReason, TxCategory
+from .types import TxInput, SimMeta, FailOpenReason
 from .config import SimulatorConfig, DEFAULT_CONFIG
 from .classifier import classify_transaction
 
@@ -114,7 +113,12 @@ class Simulator:
         """
         try:
             tx_data = await self.client.call("eth_getTransactionByHash", [tx_hash])
-            return tx_data
+            if tx_data is None:
+                return None
+            if isinstance(tx_data, dict):
+                return tx_data
+            logger.warning(f"Unexpected transaction payload type for {tx_hash}: {type(tx_data)}")
+            return None
         except Exception as e:
             logger.warning(f"Failed to get transaction {tx_hash}: {e}")
             return None
@@ -123,7 +127,12 @@ class Simulator:
         """获取交易收据（包含日志）"""
         try:
             receipt = await self.client.call("eth_getTransactionReceipt", [tx_hash])
-            return receipt
+            if receipt is None:
+                return None
+            if isinstance(receipt, dict):
+                return receipt
+            logger.warning(f"Unexpected receipt payload type for {tx_hash}: {type(receipt)}")
+            return None
         except Exception as e:
             logger.warning(f"Failed to get receipt {tx_hash}: {e}")
             return None
@@ -261,7 +270,12 @@ class Simulator:
                 "debug_traceTransaction",
                 [tx_hash, {"tracer": "callTracer"}]
             )
-            return trace
+            if trace is None:
+                return None
+            if isinstance(trace, dict):
+                return trace
+            logger.debug(f"Unexpected trace payload type for {tx_hash}: {type(trace)}")
+            return None
         except Exception as e:
             logger.debug(f"Failed to get trace for {tx_hash}: {e}")
             return None
