@@ -6,9 +6,9 @@ Wallet Invariant MVP - Execution Gate
 
 import asyncio
 import logging
-from typing import Optional, Tuple
+from typing import Optional
 
-from .types import TxInput, SimMeta, DeltaS, GateDecision, Decision
+from .types import TxInput, GateDecision
 from .config import GateConfig, DEFAULT_CONFIG
 from .simulator import Simulator
 from .delta_extractor import DeltaExtractor

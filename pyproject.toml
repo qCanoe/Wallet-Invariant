@@ -39,7 +39,9 @@ dependencies = [
 dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
+    "pytest-httpx>=0.30.0",
     "mypy>=1.0.0",
+    "ruff>=0.3.0",
 ]
 
 [project.scripts]
@@ -48,6 +50,10 @@ gate = "src.cli:main"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
 
 [tool.mypy]
 python_version = "3.9"

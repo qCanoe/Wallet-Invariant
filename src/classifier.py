@@ -7,12 +7,22 @@ Wallet Invariant MVP - 交易粗分类器
 - NonAssetOp: 其余（login/claim/mint 等）
 """
 
-from typing import Optional
 from .types import TxInput, TxCategory
 from .constants import (
     ASSET_OP_SELECTORS,
     PERMISSION_OP_SELECTORS,
     COMPOSITE_OP_SELECTORS,
+    SELECTOR_SWAP_EXACT_TOKENS,
+    SELECTOR_SWAP_TOKENS_EXACT,
+    SELECTOR_SWAP_EXACT_ETH,
+    SELECTOR_SWAP_ETH_EXACT,
+    SELECTOR_EXECUTE,
+    SELECTOR_MULTICALL,
+    SELECTOR_1INCH_SWAP,
+    SELECTOR_CURVE_EXCHANGE,
+    SELECTOR_BALANCER_SWAP,
+    SELECTOR_PARASWAP_SIMPLE,
+    SELECTOR_ZERO_EX_TRANSFORM,
 )
 
 
@@ -71,16 +81,21 @@ def is_likely_swap(tx: TxInput) -> bool:
         return False
     
     swap_selectors = {
-        "0x38ed1739",  # swapExactTokensForTokens
-        "0x8803dbee",  # swapTokensForExactTokens
-        "0x7ff36ab5",  # swapExactETHForTokens
-        "0xfb3bdb41",  # swapETHForExactTokens
-        "0x5c11d795",  # swapExactTokensForTokensSupportingFeeOnTransferTokens
-        "0xb6f9de95",  # swapExactETHForTokensSupportingFeeOnTransferTokens
-        "0x3593564c",  # execute (Universal Router)
-        "0xac9650d8",  # multicall
+        SELECTOR_SWAP_EXACT_TOKENS,   # swapExactTokensForTokens (Uniswap V2)
+        SELECTOR_SWAP_TOKENS_EXACT,   # swapTokensForExactTokens (Uniswap V2)
+        SELECTOR_SWAP_EXACT_ETH,      # swapExactETHForTokens (Uniswap V2)
+        SELECTOR_SWAP_ETH_EXACT,      # swapETHForExactTokens (Uniswap V2)
+        "0x5c11d795",                 # swapExactTokensForTokensSupportingFeeOnTransferTokens
+        "0xb6f9de95",                 # swapExactETHForTokensSupportingFeeOnTransferTokens
+        SELECTOR_EXECUTE,             # execute (Universal Router)
+        SELECTOR_MULTICALL,           # multicall
+        SELECTOR_1INCH_SWAP,          # 1inch swap
+        SELECTOR_CURVE_EXCHANGE,      # Curve exchange
+        SELECTOR_BALANCER_SWAP,       # Balancer swap
+        SELECTOR_PARASWAP_SIMPLE,     # Paraswap simpleSwap
+        SELECTOR_ZERO_EX_TRANSFORM,   # 0x transformERC20
     }
-    
+
     return selector.lower() in swap_selectors
 
 

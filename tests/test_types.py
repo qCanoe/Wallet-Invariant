@@ -2,19 +2,16 @@
 测试类型定义
 """
 
-import pytest
 from src.types import (
     TxInput,
     TxCategory,
     AssetChange,
     PermissionChange,
     DeltaS,
-    DeltaScope,
     GateDecision,
     Decision,
     InvariantViolation,
     InvariantId,
-    ETH_ADDRESS,
     is_unlimited_allowance,
     UNLIMITED_ALLOWANCE,
 )
